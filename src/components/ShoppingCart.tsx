@@ -1,5 +1,6 @@
 import { X, Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
 import { CartItem } from '../types';
+import { apiService } from '../services/api';
 
 interface ShoppingCartProps {
   isOpen: boolean;
@@ -19,6 +20,36 @@ export default function ShoppingCart({
   if (!isOpen) return null;
 
   const total = cartItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+
+  const handleCheckout = async () => {
+    try {
+      console.log('💳 Starting checkout process...');
+      
+      // Prepare cart items for purchase
+      const purchaseItems = cartItems.map(item => ({
+        productId: item.product.id,
+        productName: item.product.name,
+        quantity: item.quantity,
+        price: item.product.price,
+        total: item.product.price * item.quantity
+      }));
+
+      // Call API to process purchase
+      const result = await apiService.purchase(purchaseItems);
+      
+      console.log('✅ Purchase successful:', result);
+      
+      // Show success message (you could add a toast notification here)
+      alert(`Purchase successful! Order ID: ${result.orderId}`);
+      
+      // Close cart after successful purchase
+      onClose();
+      
+    } catch (error) {
+      console.error('❌ Checkout failed:', error);
+      alert('Checkout failed. Please try again.');
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-end">
@@ -114,7 +145,10 @@ export default function ShoppingCart({
                   ${(total + (total > 500 ? 0 : 25)).toLocaleString()}
                 </span>
               </div>
-              <button className="w-full bg-gradient-to-r from-amber-600 to-amber-700 text-white py-4 rounded-full font-semibold hover:from-amber-700 hover:to-amber-800 transition-all duration-300 shadow-lg hover:shadow-xl">
+              <button 
+                onClick={handleCheckout}
+                className="w-full bg-gradient-to-r from-amber-600 to-amber-700 text-white py-4 rounded-full font-semibold hover:from-amber-700 hover:to-amber-800 transition-all duration-300 shadow-lg hover:shadow-xl"
+              >
                 Proceed to Checkout
               </button>
             </div>

@@ -1,12 +1,13 @@
-import { ShoppingBag, Menu, X } from 'lucide-react';
+import { ShoppingBag, Menu, X, User } from 'lucide-react';
 import { useState } from 'react';
 
 interface HeaderProps {
   cartItemCount: number;
   onCartClick: () => void;
+  onAuthClick: () => void;
 }
 
-export default function Header({ cartItemCount, onCartClick }: HeaderProps) {
+export default function Header({ cartItemCount, onCartClick, onAuthClick }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
@@ -41,6 +42,17 @@ export default function Header({ cartItemCount, onCartClick }: HeaderProps) {
           </nav>
 
           <div className="flex items-center space-x-4">
+            {/* Sign In/Sign Up Button */}
+            <button
+              onClick={onAuthClick}
+              className="hidden md:flex items-center space-x-2 px-4 py-2 text-gray-700 hover:text-amber-600 transition-colors border border-gray-300 rounded-lg hover:border-amber-600"
+              aria-label="Sign In"
+            >
+              <User className="w-5 h-5" />
+              <span className="text-sm font-medium">Sign In</span>
+            </button>
+
+            {/* Cart Button */}
             <button
               onClick={onCartClick}
               className="relative p-2 text-gray-700 hover:text-amber-600 transition-colors"
@@ -78,6 +90,13 @@ export default function Header({ cartItemCount, onCartClick }: HeaderProps) {
             <a href="#contact" className="block py-2 text-gray-700 hover:text-amber-600 transition-colors font-medium">
               Contact
             </a>
+            <button
+              onClick={onAuthClick}
+              className="flex items-center space-x-2 w-full py-2 text-gray-700 hover:text-amber-600 transition-colors font-medium"
+            >
+              <User className="w-5 h-5" />
+              <span>Sign In</span>
+            </button>
           </div>
         )}
       </div>

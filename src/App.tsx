@@ -5,53 +5,112 @@ import CategoryFilter from './components/CategoryFilter';
 import ProductCard from './components/ProductCard';
 import ProductModal from './components/ProductModal';
 import ShoppingCart from './components/ShoppingCart';
+import AuthForm from './components/AuthForm';
 import Footer from './components/Footer';
 import { products } from './data/products';
 import { Product, CartItem } from './types';
+import { apiService } from './services/api';
 
 function App() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   const filteredProducts = selectedCategory === 'all'
     ? products
     : products.filter(p => p.category === selectedCategory);
 
-  const addToCart = (product: Product) => {
-    setCartItems(prev => {
-      const existingItem = prev.find(item => item.product.id === product.id);
-      if (existingItem) {
-        return prev.map(item =>
-          item.product.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
+  const addToCart = async (product: Product) => {
+    try {
+      // Call API to add item to cart
+      await apiService.addToCart(product.id, 1);
+      
+      // Update local state
+      setCartItems(prev => {
+        const existingItem = prev.find(item => item.product.id === product.id);
+        if (existingItem) {
+          return prev.map(item =>
+            item.product.id === product.id
+              ? { ...item, quantity: item.quantity + 1 }
+              : item
+          );
+        }
+        return [...prev, { product, quantity: 1 }];
+      });
+      
+      console.log(`✅ Successfully added ${product.name} to cart`);
+    } catch (error) {
+      console.error('❌ Failed to add item to cart:', error);
+      // Still update local state for better UX, but log the error
+      setCartItems(prev => {
+        const existingItem = prev.find(item => item.product.id === product.id);
+        if (existingItem) {
+          return prev.map(item =>
+            item.product.id === product.id
+              ? { ...item, quantity: item.quantity + 1 }
+              : item
+          );
+        }
+        return [...prev, { product, quantity: 1 }];
+      });
+    }
+  };
+
+  const updateQuantity = async (productId: string, newQuantity: number) => {
+    try {
+      // Call API to update cart item
+      await apiService.updateCartItem(productId, newQuantity);
+      
+      // Update local state
+      setCartItems(prev =>
+        prev.map(item =>
+          item.product.id === productId
+            ? { ...item, quantity: newQuantity }
             : item
-        );
-      }
-      return [...prev, { product, quantity: 1 }];
-    });
+        )
+      );
+      
+      console.log(`✅ Successfully updated quantity for product ${productId} to ${newQuantity}`);
+    } catch (error) {
+      console.error('❌ Failed to update cart item:', error);
+      // Still update local state for better UX
+      setCartItems(prev =>
+        prev.map(item =>
+          item.product.id === productId
+            ? { ...item, quantity: newQuantity }
+            : item
+        )
+      );
+    }
   };
 
-  const updateQuantity = (productId: string, newQuantity: number) => {
-    setCartItems(prev =>
-      prev.map(item =>
-        item.product.id === productId
-          ? { ...item, quantity: newQuantity }
-          : item
-      )
-    );
-  };
-
-  const removeItem = (productId: string) => {
-    setCartItems(prev => prev.filter(item => item.product.id !== productId));
+  const removeItem = async (productId: string) => {
+    try {
+      // Call API to remove item from cart
+      await apiService.removeFromCart(productId);
+      
+      // Update local state
+      setCartItems(prev => prev.filter(item => item.product.id !== productId));
+      
+      console.log(`✅ Successfully removed product ${productId} from cart`);
+    } catch (error) {
+      console.error('❌ Failed to remove item from cart:', error);
+      // Still update local state for better UX
+      setCartItems(prev => prev.filter(item => item.product.id !== productId));
+    }
   };
 
   const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white via-amber-50/30 to-white">
-      <Header cartItemCount={totalItems} onCartClick={() => setIsCartOpen(true)} />
+      <Header 
+        cartItemCount={totalItems} 
+        onCartClick={() => setIsCartOpen(true)} 
+        onAuthClick={() => setIsAuthOpen(true)} 
+      />
 
       <Hero />
 
@@ -168,6 +227,11 @@ function App() {
         cartItems={cartItems}
         onUpdateQuantity={updateQuantity}
         onRemoveItem={removeItem}
+      />
+
+      <AuthForm
+        isOpen={isAuthOpen}
+        onClose={() => setIsAuthOpen(false)}
       />
     </div>
   );

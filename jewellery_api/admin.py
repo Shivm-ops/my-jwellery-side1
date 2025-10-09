@@ -11,9 +11,10 @@ class ProductAdmin(admin.ModelAdmin):
 
 @admin.register(CartItem)
 class CartItemAdmin(admin.ModelAdmin):
-    list_display = ['product', 'quantity', 'session_id', 'created_at']
-    list_filter = ['created_at']
+    list_display = ['product', 'quantity', 'session_id', 'updated_at', 'created_at']
+    list_filter = ['updated_at', 'created_at']
     search_fields = ['product__name', 'session_id']
+    ordering = ['-updated_at']  # Show most recently updated first
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):

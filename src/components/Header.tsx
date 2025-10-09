@@ -1,13 +1,15 @@
-import { ShoppingBag, Menu, X, User } from 'lucide-react';
+import { ShoppingBag, Menu, X, User, Package, Settings } from 'lucide-react';
 import { useState } from 'react';
 
 interface HeaderProps {
   cartItemCount: number;
   onCartClick: () => void;
   onAuthClick: () => void;
+  onOrdersClick?: () => void;
+  onProfileClick?: () => void;
 }
 
-export default function Header({ cartItemCount, onCartClick, onAuthClick }: HeaderProps) {
+export default function Header({ cartItemCount, onCartClick, onAuthClick, onOrdersClick, onProfileClick }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
@@ -26,22 +28,46 @@ export default function Header({ cartItemCount, onCartClick, onAuthClick }: Head
             </div>
           </div>
 
-          <nav className="hidden md:flex items-center space-x-8">
-            <a href="#" className="text-gray-700 hover:text-amber-600 transition-colors font-medium">
+          <div className="flex items-center space-x-6">
+            {/* Navigation Links */}
+            <a href="#" className="hidden md:block text-gray-700 hover:text-amber-600 transition-colors font-medium">
               Home
             </a>
-            <a href="#shop" className="text-gray-700 hover:text-amber-600 transition-colors font-medium">
+            <a href="#shop" className="hidden md:block text-gray-700 hover:text-amber-600 transition-colors font-medium">
               Shop
             </a>
-            <a href="#about" className="text-gray-700 hover:text-amber-600 transition-colors font-medium">
+            <a href="#about" className="hidden md:block text-gray-700 hover:text-amber-600 transition-colors font-medium">
               About
             </a>
-            <a href="#contact" className="text-gray-700 hover:text-amber-600 transition-colors font-medium">
+            <a href="#contact" className="hidden md:block text-gray-700 hover:text-amber-600 transition-colors font-medium">
               Contact
             </a>
-          </nav>
 
-          <div className="flex items-center space-x-4">
+            {/* Action Buttons */}
+            {/* Orders Button */}
+            {onOrdersClick && (
+              <button
+                onClick={onOrdersClick}
+                className="hidden md:flex items-center space-x-2 text-gray-700 hover:text-amber-600 transition-colors font-medium"
+                aria-label="Orders"
+              >
+                <Package className="w-5 h-5" />
+                <span>Orders</span>
+              </button>
+            )}
+
+            {/* Profile Button */}
+            {onProfileClick && (
+              <button
+                onClick={onProfileClick}
+                className="hidden md:flex items-center space-x-2 text-gray-700 hover:text-amber-600 transition-colors font-medium"
+                aria-label="Profile"
+              >
+                <Settings className="w-5 h-5" />
+                <span>Profile</span>
+              </button>
+            )}
+
             {/* Sign In/Sign Up Button */}
             <button
               onClick={onAuthClick}
@@ -90,6 +116,24 @@ export default function Header({ cartItemCount, onCartClick, onAuthClick }: Head
             <a href="#contact" className="block py-2 text-gray-700 hover:text-amber-600 transition-colors font-medium">
               Contact
             </a>
+            {onOrdersClick && (
+              <button
+                onClick={onOrdersClick}
+                className="flex items-center space-x-2 w-full py-2 text-gray-700 hover:text-amber-600 transition-colors font-medium"
+              >
+                <Package className="w-5 h-5" />
+                <span>Orders</span>
+              </button>
+            )}
+            {onProfileClick && (
+              <button
+                onClick={onProfileClick}
+                className="flex items-center space-x-2 w-full py-2 text-gray-700 hover:text-amber-600 transition-colors font-medium"
+              >
+                <Settings className="w-5 h-5" />
+                <span>Profile</span>
+              </button>
+            )}
             <button
               onClick={onAuthClick}
               className="flex items-center space-x-2 w-full py-2 text-gray-700 hover:text-amber-600 transition-colors font-medium"

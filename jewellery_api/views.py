@@ -13,7 +13,7 @@ import uuid
 from datetime import datetime
 import logging
 
-from .models import Product, CartItem, Order, ContactMessage, User
+from .models import Product, CartItem, Order, ContactMessage, User, UserProfile
 
 logger = logging.getLogger('jewellery_api')
 
@@ -118,10 +118,11 @@ def add_to_cart(request):
     
     try:
         # Get or create session
-        session_key = request.session.session_key
-        if not session_key:
+        if not request.session.session_key:
             request.session.create()
-            session_key = request.session.session_key
+        session_key = request.session.session_key
+        
+        logger.info(f"🔑 Session key: {session_key}")
         
         # Get product
         try:
@@ -132,17 +133,20 @@ def add_to_cart(request):
                 "message": "Product not found"
             }, status=status.HTTP_404_NOT_FOUND)
         
-        # Check if cart item already exists for this product and session
-        try:
-            cart_item = CartItem.objects.get(
-                product=product,
-                session_id=session_key
-            )
-            # Item exists, increment quantity
+        # Check for existing cart items with the same product and session
+        existing_items = CartItem.objects.filter(
+            product=product,
+            session_id=session_key
+        )
+        
+        if existing_items.exists():
+            # Item exists, increment quantity of the first one
+            cart_item = existing_items.first()
+            old_quantity = cart_item.quantity
             cart_item.quantity += quantity
-            cart_item.save()
-            logger.info(f"🔄 Updated existing cart item: {product.name} quantity to {cart_item.quantity}")
-        except CartItem.DoesNotExist:
+            cart_item.save()  # This will update updated_at automatically
+            logger.info(f"🔄 Updated existing cart item: {product.name} quantity from {old_quantity} to {cart_item.quantity}")
+        else:
             # Item doesn't exist, create new one
             cart_item = CartItem.objects.create(
                 product=product,
@@ -432,4 +436,172 @@ def logout_user(request):
         return Response({
             "success": False,
             "message": "Error logging out user"
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# Order APIs
+@api_view(['GET'])
+def get_orders(request):
+    """Get user's orders"""
+    log_request('/api/orders')
+    
+    try:
+        session_key = request.session.session_key
+        if not session_key:
+            request.session.create()
+            session_key = request.session.session_key
+        
+        # Get orders for this session (or user if logged in)
+        orders = Order.objects.filter(session_id=session_key)
+        
+        orders_data = []
+        for order in orders:
+            orders_data.append({
+                'id': order.id,
+                'order_id': order.order_id,
+                'items': order.items,
+                'total_amount': float(order.total_amount),
+                'status': order.status,
+                'created_at': order.created_at.isoformat(),
+                'shipping_address': order.shipping_address,
+                'billing_address': order.billing_address,
+            })
+        
+        logger.info(f"✅ Retrieved {len(orders_data)} orders")
+        
+        return Response({
+            "success": True,
+            "orders": orders_data
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Error retrieving orders: {str(e)}")
+        return Response({
+            "success": False,
+            "message": "Error retrieving orders"
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+def get_order_detail(request, order_id):
+    """Get specific order details"""
+    log_request(f'/api/orders/{order_id}')
+    
+    try:
+        session_key = request.session.session_key
+        if not session_key:
+            return Response({
+                "success": False,
+                "message": "Session not found"
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        try:
+            order = Order.objects.get(order_id=order_id, session_id=session_key)
+            
+            order_data = {
+                'id': order.id,
+                'order_id': order.order_id,
+                'items': order.items,
+                'total_amount': float(order.total_amount),
+                'status': order.status,
+                'created_at': order.created_at.isoformat(),
+                'updated_at': order.updated_at.isoformat(),
+                'shipping_address': order.shipping_address,
+                'billing_address': order.billing_address,
+                'notes': order.notes,
+            }
+            
+            logger.info(f"✅ Retrieved order details: {order_id}")
+            
+            return Response({
+                "success": True,
+                "order": order_data
+            })
+            
+        except Order.DoesNotExist:
+            return Response({
+                "success": False,
+                "message": "Order not found"
+            }, status=status.HTTP_404_NOT_FOUND)
+            
+    except Exception as e:
+        logger.error(f"❌ Error retrieving order details: {str(e)}")
+        return Response({
+            "success": False,
+            "message": "Error retrieving order details"
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# Profile APIs
+@api_view(['GET'])
+def get_profile(request):
+    """Get user profile"""
+    log_request('/api/profile')
+    
+    try:
+        session_key = request.session.session_key
+        if not session_key:
+            return Response({
+                "success": False,
+                "message": "Session not found"
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # For now, return a default profile structure
+        # In a real app, you'd link this to user authentication
+        profile_data = {
+            'name': 'Guest User',
+            'email': 'guest@example.com',
+            'phone': '',
+            'address': '',
+            'city': '',
+            'state': '',
+            'zip_code': '',
+            'country': '',
+            'date_of_birth': None,
+        }
+        
+        logger.info("✅ Retrieved profile data")
+        
+        return Response({
+            "success": True,
+            "profile": profile_data
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Error retrieving profile: {str(e)}")
+        return Response({
+            "success": False,
+            "message": "Error retrieving profile"
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['PUT'])
+def update_profile(request):
+    """Update user profile"""
+    data = request.data
+    log_request('/api/profile', data, 'PUT')
+    
+    try:
+        session_key = request.session.session_key
+        if not session_key:
+            return Response({
+                "success": False,
+                "message": "Session not found"
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # For now, just return success
+        # In a real app, you'd save this to the database
+        logger.info("✅ Profile updated successfully")
+        
+        return Response({
+            "success": True,
+            "message": "Profile updated successfully",
+            "profile": data
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Error updating profile: {str(e)}")
+        return Response({
+            "success": False,
+            "message": "Error updating profile"
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

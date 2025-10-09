@@ -14,4 +14,10 @@ urlpatterns = [
     path('auth/register/', views.register_user, name='register_user'),
     path('auth/login/', views.login_user, name='login_user'),
     path('auth/logout/', views.logout_user, name='logout_user'),
+    # Order URLs
+    path('orders/', views.get_orders, name='get_orders'),
+    path('orders/<str:order_id>/', views.get_order_detail, name='get_order_detail'),
+    # Profile URLs
+    path('profile/', views.get_profile, name='get_profile'),
+    path('profile/update/', views.update_profile, name='update_profile'),
 ]

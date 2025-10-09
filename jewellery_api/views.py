@@ -30,6 +30,42 @@ def home(request):
     log_request('/api/home')
     return Response({"message": "Welcome to Home!"})
 
+@api_view(['GET'])
+def get_products(request):
+    """Get all products"""
+    log_request('/api/products')
+    
+    try:
+        products = Product.objects.all()
+        products_data = []
+        
+        for product in products:
+            products_data.append({
+                'id': product.id,
+                'name': product.name,
+                'description': product.description,
+                'price': float(product.price),
+                'material': product.material,
+                'category': product.category,
+                'imageUrl': product.imageUrl,
+                'inStock': product.inStock,
+                'featured': product.featured,
+            })
+        
+        logger.info(f"✅ Retrieved {len(products_data)} products")
+        
+        return Response({
+            "success": True,
+            "products": products_data
+        })
+        
+    except Exception as e:
+        logger.error(f"❌ Error retrieving products: {str(e)}")
+        return Response({
+            "success": False,
+            "message": "Error retrieving products"
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 @api_view(['GET', 'POST'])
 def contact(request):
     if request.method == 'POST':

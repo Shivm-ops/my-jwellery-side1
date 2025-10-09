@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import CategoryFilter from './components/CategoryFilter';
@@ -7,7 +7,6 @@ import ProductModal from './components/ProductModal';
 import ShoppingCart from './components/ShoppingCart';
 import AuthForm from './components/AuthForm';
 import Footer from './components/Footer';
-import { products } from './data/products';
 import { Product, CartItem } from './types';
 import { apiService } from './services/api';
 
@@ -17,6 +16,31 @@ function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch products from API
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        const response = await apiService.getProducts();
+        if (response.success) {
+          setProducts(response.products);
+        } else {
+          setError('Failed to load products');
+        }
+      } catch (err) {
+        console.error('Error fetching products:', err);
+        setError('Failed to load products');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   const filteredProducts = selectedCategory === 'all'
     ? products
@@ -129,21 +153,40 @@ function App() {
           onCategoryChange={setSelectedCategory}
         />
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredProducts.map(product => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              onAddToCart={addToCart}
-              onViewDetails={setSelectedProduct}
-            />
-          ))}
-        </div>
-
-        {filteredProducts.length === 0 && (
+        {loading ? (
           <div className="text-center py-20">
-            <p className="text-xl text-gray-500">No products found in this category</p>
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-amber-600"></div>
+            <p className="text-xl text-gray-500 mt-4">Loading products...</p>
           </div>
+        ) : error ? (
+          <div className="text-center py-20">
+            <p className="text-xl text-red-500">{error}</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="mt-4 px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700"
+            >
+              Retry
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filteredProducts.map(product => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  onAddToCart={addToCart}
+                  onViewDetails={setSelectedProduct}
+                />
+              ))}
+            </div>
+
+            {filteredProducts.length === 0 && (
+              <div className="text-center py-20">
+                <p className="text-xl text-gray-500">No products found in this category</p>
+              </div>
+            )}
+          </>
         )}
       </section>
 

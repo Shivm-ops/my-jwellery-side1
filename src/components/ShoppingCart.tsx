@@ -53,9 +53,9 @@ export default function ShoppingCart({
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-end">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-40" onClick={onClose} />
 
-      <div className="relative bg-white h-full w-full max-w-md shadow-2xl flex flex-col">
+      <div className="relative bg-white h-full w-full max-w-md shadow-2xl flex flex-col z-50">
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center space-x-3">
             <ShoppingBag className="w-6 h-6 text-amber-600" />

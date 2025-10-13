@@ -10,6 +10,7 @@ urlpatterns = [
     path('cart/update/', views.update_cart, name='update_cart'),
     path('cart/remove/', views.remove_from_cart, name='remove_from_cart'),
     path('buy/', views.buy, name='buy'),
+    path('cashfree/create-order/', views.create_cashfree_order, name='create_cashfree_order'),
     # Authentication URLs
     path('auth/register/', views.register_user, name='register_user'),
     path('auth/login/', views.login_user, name='login_user'),

@@ -121,6 +121,26 @@ export const apiService = {
     return response.json();
   },
 
+  // Create Cashfree order and return payment link/session
+  createPaymentOrder: async (amount: number, customer?: { name?: string; email?: string; phone?: string; }): Promise<any> => {
+    const response = await fetch(`${API_BASE_URL}/cashfree/create-order/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        amount,
+        customer_name: customer?.name,
+        customer_email: customer?.email,
+        customer_phone: customer?.phone,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to create payment order: ${response.statusText}`);
+    }
+
+    return response.json();
+  },
+
   // Contact form submission
   contact: async (contactData: any): Promise<any> => {
     console.log('📧 Submitting contact form');

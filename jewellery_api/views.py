@@ -12,6 +12,8 @@ import json
 import uuid
 from datetime import datetime
 import logging
+import os
+import requests
 
 from .models import Product, CartItem, Order, ContactMessage, User, UserProfile
 
@@ -286,7 +288,8 @@ def buy(request):
             order_id=order_id,
             items=items,
             total_amount=total_amount,
-            status='completed'
+            status='completed',
+            session_id=session_key
         )
         
         # Clear cart after successful purchase
@@ -309,6 +312,76 @@ def buy(request):
             "success": False,
             "message": "Error processing purchase"
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+def create_cashfree_order(request):
+    """Create a Cashfree payment link (sandbox) and return the link URL."""
+    data = request.data
+    log_request('/api/cashfree/create-order', data, 'POST')
+
+    try:
+        amount = float(data.get('amount', 0))
+        customer_name = data.get('customer_name', 'Guest User')
+        customer_email = data.get('customer_email', 'guest@example.com')
+        customer_phone = data.get('customer_phone', '9999999999')
+
+        if amount <= 0:
+            return Response({"success": False, "message": "Invalid amount"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not request.session.session_key:
+            request.session.create()
+        session_key = request.session.session_key
+
+        app_id = os.environ.get('CASHFREE_APP_ID', '')
+        secret_key = os.environ.get('CASHFREE_SECRET_KEY', '')
+        base_url = os.environ.get('CASHFREE_BASE_URL', 'https://sandbox.cashfree.com/pg')
+
+        if not app_id or not secret_key:
+            return Response({"success": False, "message": "Cashfree credentials not configured"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        headers = {
+            'accept': 'application/json',
+            'x-api-version': '2023-08-01',
+            'content-type': 'application/json',
+            'x-client-id': app_id,
+            'x-client-secret': secret_key,
+        }
+
+        order_id = f"CF-{datetime.now().strftime('%Y%m%d-%H%M%S')}-{str(uuid.uuid4())[:6]}"
+
+        payload = {
+            'order_id': order_id,
+            'order_amount': amount,
+            'order_currency': 'INR',
+            'customer_details': {
+                'customer_id': session_key,
+                'customer_name': customer_name,
+                'customer_email': customer_email,
+                'customer_phone': customer_phone,
+            },
+            'order_meta': {
+                'return_url': f"http://localhost:5173/#?order_id={order_id}",
+                'payment_methods': 'cc,dc,upi,nb'
+            }
+        }
+
+        resp = requests.post(f"{base_url}/orders", json=payload, headers=headers, timeout=20)
+        if resp.status_code >= 300:
+            return Response({"success": False, "message": "Cashfree error", "details": resp.text}, status=status.HTTP_502_BAD_GATEWAY)
+
+        data = resp.json()
+        payment_link = data.get('payment_session_id') or data.get('payment_link')
+
+        return Response({
+            'success': True,
+            'order_id': order_id,
+            'payment_link': payment_link,
+            'raw': data
+        })
+    except Exception as e:
+        logger.error(f"❌ Error creating Cashfree order: {str(e)}")
+        return Response({"success": False, "message": "Error creating Cashfree order"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 # Authentication Views

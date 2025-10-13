@@ -90,6 +90,8 @@ function App() {
         }
         return [...prev, { product, quantity: 1 }];
       });
+      // Open cart so user can access immediately
+      setIsCartOpen(true);
       
       console.log(`✅ Successfully added ${product.name} to cart`);
     } catch (error) {
@@ -106,6 +108,8 @@ function App() {
         }
         return [...prev, { product, quantity: 1 }];
       });
+      // Open cart even if API failed (optimistic UX)
+      setIsCartOpen(true);
     }
   };
 
@@ -327,6 +331,7 @@ function App() {
         cartItems={cartItems}
         onUpdateQuantity={updateQuantity}
         onRemoveItem={removeItem}
+        onCheckoutSuccess={() => setIsAuthOpen(true)}
       />
 
       <AuthForm

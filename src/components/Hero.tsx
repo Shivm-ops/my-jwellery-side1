@@ -1,6 +1,22 @@
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Search } from 'lucide-react';
+import { useState } from 'react';
 
-export default function Hero() {
+interface HeroProps {
+  onSearch?: (term: string) => void;
+}
+
+export default function Hero({ onSearch }: HeroProps) {
+  const [localTerm, setLocalTerm] = useState('');
+
+  const submitSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const term = localTerm.trim();
+    if (term && onSearch) {
+      onSearch(term);
+    } else if (onSearch) {
+      onSearch('');
+    }
+  };
   return (
     <section className="relative pt-20 bg-gradient-to-br from-amber-50 via-white to-amber-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-32">
@@ -8,7 +24,24 @@ export default function Hero() {
           <div className="space-y-8">
             <div className="inline-flex items-center space-x-2 bg-amber-100 text-amber-800 px-4 py-2 rounded-full text-sm font-medium">
               <Sparkles className="w-4 h-4" />
-              <span>Timeless Elegance Since 1990</span>
+              <form onSubmit={submitSearch} className="flex items-center">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-700/70" />
+                  <input
+                    type="text"
+                    value={localTerm}
+                    onChange={(e) => setLocalTerm(e.target.value)}
+                    placeholder="Search jewelry..."
+                    className="pl-9 pr-20 py-1.5 rounded-full bg-white/80 text-amber-900 placeholder-amber-800/60 focus:outline-none focus:ring-2 focus:ring-amber-400 border border-amber-200"
+                  />
+                  <button
+                    type="submit"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 px-3 py-1 rounded-full bg-gradient-to-r from-amber-600 to-amber-700 text-white font-semibold text-xs hover:from-amber-700 hover:to-amber-800"
+                  >
+                    Search
+                  </button>
+                </div>
+              </form>
             </div>
 
             <h1 className="text-5xl md:text-6xl font-bold leading-tight">
@@ -24,6 +57,8 @@ export default function Hero() {
             <p className="text-lg text-gray-600 leading-relaxed max-w-xl">
               Explore our exquisite collection of handcrafted jewelry, where timeless elegance meets modern design. Each piece is carefully selected to celebrate life's precious moments.
             </p>
+
+            
 
             <div className="flex flex-col sm:flex-row gap-4">
               <a

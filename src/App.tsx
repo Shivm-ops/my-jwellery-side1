@@ -4,6 +4,7 @@ import Hero from './components/Hero';
 import CategoryFilter from './components/CategoryFilter';
 import ProductCard from './components/ProductCard';
 import ProductModal from './components/ProductModal';
+import WeightPriceModal from './components/WeightPriceModal';
 import ShoppingCart from './components/ShoppingCart';
 import AuthForm from './components/AuthForm';
 import OrdersPage from './components/OrdersPage';
@@ -14,10 +15,12 @@ import { apiService } from './services/api';
 
 function App() {
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [weightModalProduct, setWeightModalProduct] = useState<Product | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -45,9 +48,30 @@ function App() {
     fetchProducts();
   }, []);
 
-  const filteredProducts = selectedCategory === 'all'
+  const categoryFiltered = selectedCategory === 'all'
     ? products
     : products.filter(p => p.category === selectedCategory);
+
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const filteredProducts = normalizedSearch
+    ? categoryFiltered.filter(p =>
+        p.name.toLowerCase().includes(normalizedSearch) ||
+        p.description.toLowerCase().includes(normalizedSearch)
+      )
+    : categoryFiltered;
+
+  const handleSearch = (term: string) => {
+    setSearchTerm(term);
+    // Reset category to show all when searching
+    setSelectedCategory('all');
+    // Smooth scroll to shop section
+    const el = document.getElementById('shop');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      window.location.hash = '#shop';
+    }
+  };
 
   const addToCart = async (product: Product) => {
     try {
@@ -140,7 +164,7 @@ function App() {
       default:
         return (
           <>
-            <Hero />
+            <Hero onSearch={handleSearch} />
 
             <section id="shop" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
               <div className="text-center mb-12">
@@ -179,7 +203,7 @@ function App() {
                       <ProductCard
                         key={product.id}
                         product={product}
-                        onAddToCart={addToCart}
+                        onAddToCart={() => setWeightModalProduct(product)}
                         onViewDetails={setSelectedProduct}
                       />
                     ))}
@@ -281,6 +305,19 @@ function App() {
           product={selectedProduct}
           onClose={() => setSelectedProduct(null)}
           onAddToCart={addToCart}
+        />
+      )}
+
+      {weightModalProduct && (
+        <WeightPriceModal
+          product={weightModalProduct}
+          isOpen={true}
+          onClose={() => setWeightModalProduct(null)}
+          onConfirm={({ product, grams, metal, price }) => {
+            // You could optionally store grams/metal/price in cart metadata if backend supports it
+            addToCart(product);
+            setWeightModalProduct(null);
+          }}
         />
       )}
 

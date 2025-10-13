@@ -8,6 +8,7 @@ interface ShoppingCartProps {
   cartItems: CartItem[];
   onUpdateQuantity: (productId: string, newQuantity: number) => void;
   onRemoveItem: (productId: string) => void;
+  onCheckoutSuccess?: () => void;
 }
 
 export default function ShoppingCart({
@@ -16,6 +17,7 @@ export default function ShoppingCart({
   cartItems,
   onUpdateQuantity,
   onRemoveItem,
+  onCheckoutSuccess,
 }: ShoppingCartProps) {
   if (!isOpen) return null;
 
@@ -44,6 +46,11 @@ export default function ShoppingCart({
       
       // Close cart after successful purchase
       onClose();
+      
+      // Notify parent about successful checkout
+      if (onCheckoutSuccess) {
+        onCheckoutSuccess();
+      }
       
     } catch (error) {
       console.error('❌ Checkout failed:', error);

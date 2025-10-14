@@ -141,4 +141,15 @@ export const products: Product[] = [
     inStock: true,
     featured: true,
   },
+  {
+    id: '14',
+    name: 'Diamond Ring',
+    description: '24 carat',
+    price: 12117,
+    category: 'rings',
+    imageUrl: 'https://images.unsplash.com/photo-1713950920412-97799efdf870?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=876',
+    material: 'Diamond 24 Carat',
+    inStock: true,
+    featured: true,
+  },
 ];

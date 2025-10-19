@@ -27,6 +27,7 @@ export default function ProfilePage({ onBack }: { onBack: () => void }) {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     fetchProfile();
@@ -34,10 +35,16 @@ export default function ProfilePage({ onBack }: { onBack: () => void }) {
 
   const fetchProfile = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/profile/');
+      const response = await fetch('http://127.0.0.1:8000/api/profile/', {
+        credentials: 'include', // Include cookies for session authentication
+      });
       const data = await response.json();
       if (data.success) {
         setProfile(data.profile);
+        // Check if user is authenticated (not guest)
+        setIsAuthenticated(data.profile.email !== 'guest@example.com');
+      } else {
+        console.error('Error fetching profile:', data.message);
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -54,11 +61,16 @@ export default function ProfilePage({ onBack }: { onBack: () => void }) {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Include cookies for session authentication
         body: JSON.stringify(profile),
       });
       const data = await response.json();
       if (data.success) {
         alert('Profile updated successfully!');
+        // Update local profile with the returned data
+        setProfile(data.profile);
+      } else {
+        alert(`Error: ${data.message}`);
       }
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -96,6 +108,16 @@ export default function ProfilePage({ onBack }: { onBack: () => void }) {
           </button>
           <h1 className="text-3xl font-bold text-gray-900">My Profile</h1>
           <p className="text-gray-600 mt-2">Manage your personal information</p>
+          {!isAuthenticated && (
+            <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <p className="text-amber-800">
+                <strong>Note:</strong> You're currently viewing as a guest. 
+                <a href="#" className="text-amber-600 hover:text-amber-700 underline ml-1">
+                  Sign in or register
+                </a> to save your profile information permanently.
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">

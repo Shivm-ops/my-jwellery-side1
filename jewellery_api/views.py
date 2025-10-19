@@ -612,28 +612,39 @@ def get_profile(request):
     log_request('/api/profile')
     
     try:
-        session_key = request.session.session_key
-        if not session_key:
-            return Response({
-                "success": False,
-                "message": "Session not found"
-            }, status=status.HTTP_404_NOT_FOUND)
-        
-        # For now, return a default profile structure
-        # In a real app, you'd link this to user authentication
-        profile_data = {
-            'name': 'Guest User',
-            'email': 'guest@example.com',
-            'phone': '',
-            'address': '',
-            'city': '',
-            'state': '',
-            'zip_code': '',
-            'country': '',
-            'date_of_birth': None,
-        }
-        
-        logger.info("✅ Retrieved profile data")
+        # Check if user is authenticated
+        if request.user.is_authenticated:
+            user = request.user
+            profile, created = UserProfile.objects.get_or_create(user=user)
+            
+            profile_data = {
+                'name': user.name or user.username,
+                'email': user.email,
+                'phone': profile.phone or '',
+                'address': profile.address or '',
+                'city': profile.city or '',
+                'state': profile.state or '',
+                'zip_code': profile.zip_code or '',
+                'country': profile.country or '',
+                'date_of_birth': profile.date_of_birth.isoformat() if profile.date_of_birth else None,
+            }
+            
+            logger.info(f"✅ Retrieved profile data for authenticated user: {user.email}")
+        else:
+            # Return default profile for non-authenticated users
+            profile_data = {
+                'name': 'Guest User',
+                'email': 'guest@example.com',
+                'phone': '',
+                'address': '',
+                'city': '',
+                'state': '',
+                'zip_code': '',
+                'country': '',
+                'date_of_birth': None,
+            }
+            
+            logger.info("✅ Retrieved default profile data for guest user")
         
         return Response({
             "success": True,
@@ -652,24 +663,67 @@ def get_profile(request):
 def update_profile(request):
     """Update user profile"""
     data = request.data
-    log_request('/api/profile', data, 'PUT')
+    log_request('/api/profile/update', data, 'PUT')
     
     try:
-        session_key = request.session.session_key
-        if not session_key:
+        # Check if user is authenticated
+        if not request.user.is_authenticated:
             return Response({
                 "success": False,
-                "message": "Session not found"
-            }, status=status.HTTP_404_NOT_FOUND)
+                "message": "User must be logged in to update profile"
+            }, status=status.HTTP_401_UNAUTHORIZED)
         
-        # For now, just return success
-        # In a real app, you'd save this to the database
-        logger.info("✅ Profile updated successfully")
+        user = request.user
+        profile, created = UserProfile.objects.get_or_create(user=user)
+        
+        # Update user basic info
+        if 'name' in data:
+            user.name = data['name']
+        if 'email' in data:
+            user.email = data['email']
+        user.save()
+        
+        # Update profile details
+        if 'phone' in data:
+            profile.phone = data['phone']
+        if 'address' in data:
+            profile.address = data['address']
+        if 'city' in data:
+            profile.city = data['city']
+        if 'state' in data:
+            profile.state = data['state']
+        if 'zip_code' in data:
+            profile.zip_code = data['zip_code']
+        if 'country' in data:
+            profile.country = data['country']
+        if 'date_of_birth' in data and data['date_of_birth']:
+            from datetime import datetime
+            try:
+                profile.date_of_birth = datetime.strptime(data['date_of_birth'], '%Y-%m-%d').date()
+            except ValueError:
+                pass  # Invalid date format, skip
+        
+        profile.save()
+        
+        # Return updated profile data
+        updated_profile = {
+            'name': user.name or user.username,
+            'email': user.email,
+            'phone': profile.phone or '',
+            'address': profile.address or '',
+            'city': profile.city or '',
+            'state': profile.state or '',
+            'zip_code': profile.zip_code or '',
+            'country': profile.country or '',
+            'date_of_birth': profile.date_of_birth.isoformat() if profile.date_of_birth else None,
+        }
+        
+        logger.info(f"✅ Profile updated successfully for user: {user.email}")
         
         return Response({
             "success": True,
             "message": "Profile updated successfully",
-            "profile": data
+            "profile": updated_profile
         })
         
     except Exception as e:

@@ -1,4 +1,5 @@
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000/api';
+// Vite exposes env vars on import.meta.env and requires the VITE_ prefix for custom vars.
+const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:8000/api';
 
 export interface AddToCartRequest {
   productId: string;

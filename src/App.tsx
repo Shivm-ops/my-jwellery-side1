@@ -297,7 +297,7 @@ function App() {
                             <h4 className="text-lg font-semibold text-gray-900 mb-2">Phone</h4>
                             <p className="text-gray-600 mb-2">Call us for immediate assistance</p>
                             <a href="tel:+15551234567" className="text-amber-600 font-semibold hover:text-amber-700 transition-colors">
-                              +1 (555) 123-4567
+                              +91 7499404640
                             </a>
                           </div>
                         </div>
@@ -332,8 +332,8 @@ function App() {
                             <h4 className="text-lg font-semibold text-gray-900 mb-2">Visit Us</h4>
                             <p className="text-gray-600 mb-2">Come see our collection in person</p>
                             <p className="text-amber-600 font-semibold">
-                              123 Jewelry Lane<br />
-                              Diamond District, NY 10001
+                              Main road kasba Beed <br />
+                              kolhapur,416001
                             </p>
                           </div>
                         </div>

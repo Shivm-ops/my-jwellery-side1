@@ -333,7 +333,7 @@ function App() {
                             <p className="text-gray-600 mb-2">Come see our collection in person</p>
                             <p className="text-amber-600 font-semibold">
                               Main road kasba Beed <br />
-                              kolhapur,416001
+                               kolhapur,416001
                             </p>
                           </div>
                         </div>
